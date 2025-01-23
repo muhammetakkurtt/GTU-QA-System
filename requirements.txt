@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+transformers
+torch
+sentence-transformers
+pdfplumber
+pydantic
+datasets
+numpy

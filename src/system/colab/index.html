@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTÜ Soru-Cevap Sistemi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            color: #2d3436;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+
+        .input-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.1);
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .answer-container {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            display: none;
+        }
+
+        .answer-container.visible {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .answer-label {
+            color: #2d3436;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .answer-text {
+            color: #2d3436;
+            line-height: 1.6;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GTÜ Soru-Cevap Sistemi</h1>
+        <div class="input-container">
+            <textarea id="question" placeholder="Sorunuzu buraya yazın..."></textarea>
+        </div>
+        <button onclick="askQuestion()">Soru Sor</button>
+        <div class="loading" id="loading"></div>
+        <div class="answer-container" id="answer-container">
+            <div class="answer-label">Cevap:</div>
+            <div class="answer-text" id="answer"></div>
+        </div>
+    </div>
+
+    <script>
+        async function askQuestion() {
+            const question = document.getElementById("question").value;
+            const loading = document.getElementById("loading");
+            const answerContainer = document.getElementById("answer-container");
+            const answerElement = document.getElementById("answer");
+            
+            if (!question.trim()) {
+                alert("Lütfen bir soru girin!");
+                return;
+            }
+
+            loading.style.display = "block";
+            answerContainer.classList.remove("visible");
+            
+            try {
+                const ngrokResponse = await fetch("/ngrok-url");
+                const ngrokData = await ngrokResponse.json();
+                const apiUrl = ngrokData.url + "/ask";
+
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ question })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Sunucu hatası');
+                }
+                
+                const data = await response.json();
+                answerElement.textContent = data.answer;
+                answerContainer.classList.add("visible");
+            } catch (error) {
+                answerElement.textContent = "Hata: " + error.message;
+                answerContainer.classList.add("visible");
+            } finally {
+                loading.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
